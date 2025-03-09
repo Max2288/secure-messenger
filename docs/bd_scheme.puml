@@ -1,0 +1,39 @@
+@startuml
+entity "Users" {
+  * id : int <<PK>>
+  --
+  username : varchar
+  password_hash : varchar
+  public_key : text
+  created_at : timestamp
+}
+
+entity "Chats" {
+  * chat_id : int <<PK>>
+  --
+  chat_type : varchar
+  created_at : timestamp
+}
+
+entity "ChatParticipants" {
+  * id : int <<PK>>
+  --
+  chat_id : int
+  user_id : int
+  joined_at : timestamp
+}
+
+entity "Messages" {
+  * message_id : int <<PK>>
+  --
+  chat_id : int
+  sender_id : int
+  encrypted_payload : bytea
+  timestamp : timestamp
+}
+
+Users ||--o{ ChatParticipants : "участвует в"
+Users ||--o{ Messages : "отправляет"
+Chats ||---o{ ChatParticipants : "содержит"
+Chats ||---o{ Messages : "содержит"
+@enduml

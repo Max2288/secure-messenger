@@ -1,0 +1,41 @@
+@startuml
+title Передача сообщения от отправителя к получателю
+
+actor "Sender Client\n(React + TypeScript)" as Sender
+participant "FastAPI Backend" as Backend
+participant "Encryption Module" as Encrypt
+participant "Kafka Broker\n(Topic per Chat)" as Kafka
+participant "Receiver Backend\n(FastAPI)" as RecBackend
+actor "Receiver Client\n(React + TypeScript)" as Receiver
+
+' 1. Отправитель создает сообщение и посылает запрос на отправку
+Sender -> Backend: POST /sendMessage\n{ chatId, recipientId, message }
+note right: Клиент формирует сообщение в виде plain text
+
+' 2. Backend передает сообщение модулю шифрования
+Backend -> Encrypt: Encrypt(message,\nrecipientPublicKey, senderPublicKey)
+note right: Генерация сеансового ключа, случайных байтов,\nвычисление хэша, цифровая подпись и proof-of-work
+
+' 3. Модуль шифрования возвращает зашифрованный пакет
+Encrypt --> Backend: EncryptedPayload
+
+' 4. FastAPI публикует зашифрованное сообщение в Kafka
+Backend -> Kafka: Publish(topic: chat_{chatId}, EncryptedPayload)
+note right: Сообщение публикуется в топик, соответствующий чату
+
+' 5. Kafka доставляет сообщение Receiver Backend
+Kafka -> RecBackend: Deliver EncryptedPayload
+note right: Kafka гарантирует доставку сообщения
+
+' 6. Receiver Backend отправляет сообщение клиенту-получателю
+RecBackend -> Receiver: Push message\n(через WebSocket или API)
+note right: Получатель получает зашифрованный пакет
+
+' 7. Клиент-получатель производит дешифровку
+Receiver -> Receiver: Decrypt(EncryptedPayload,\nrecipientPrivateKey)
+note left: Расшифровывается сеансовый ключ,\nверифицируется подпись и хэш,\nполучается исходное сообщение
+
+' 8. Сообщение отображается получателю
+Receiver --> Receiver: Display plain text message
+
+@enduml

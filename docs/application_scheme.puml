@@ -1,0 +1,56 @@
+@startuml
+skinparam componentStyle rectangle
+title Архитектура мессенджера
+
+left to right direction
+
+package "Frontend" {
+  [React + TypeScript\n(Пользовательский интерфейс)] as ReactTS
+}
+
+package "Backend" {
+  [Django\n(Admin & Migrations)] as Django
+  [FastAPI\n(Business Logic)] as FastAPI
+}
+
+package "Data Layer" {
+  database "PostgreSQL\n(База данных)" as PostgreSQL
+  database "Redis\n(Кеширование)" as Redis
+}
+
+package "Messaging" {
+  node "Kafka Broker" as Kafka {
+    [Topics per Chat\n(топик для каждого чата)] as KafkaTopics
+  }
+}
+
+package "Monitoring" {
+  [Prometheus\n(Сбор метрик)] as Prometheus
+  [Grafana\n(Визуализация метрик)] as Grafana
+}
+
+package "Log Aggregation (ELK)" {
+  [Logstash\n(Сбор логов)] as Logstash
+  database "Elasticsearch\n(Хранение логов)" as Elasticsearch
+  [Kibana\n(Анализ логов)] as Kibana
+}
+
+ReactTS --> FastAPI : API запросы / WebSocket
+
+FastAPI --> PostgreSQL : Чтение/Запись данных
+FastAPI --> Redis : Кеширование
+
+Kafka <--> FastAPI : Доставка сообщений / Публикация сообщений
+
+
+Django --> PostgreSQL : Миграции / Администрирование
+
+Prometheus --> FastAPI : Сбор метрик
+Prometheus --> PostgreSQL : Сбор метрик
+Grafana --> Prometheus : Визуализация метрик
+
+FastAPI --> Logstash : Отправка логов
+Logstash --> Elasticsearch : Индексация логов
+Kibana --> Elasticsearch : Анализ логов
+
+@enduml
