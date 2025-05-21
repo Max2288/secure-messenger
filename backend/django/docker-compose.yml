@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  web_django:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    ports:
+      - 1024:1024
+    command: ./scripts/web/startup.sh -m -l
+    env_file:
+      - ./conf/.env
+    volumes:
+      - ./:/code
+    depends_on:
+      django_web_migrate:
+        condition: service_completed_successfully
+    networks:
+      - messenger_network
+  web_db:
+    image: postgres:15.3
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=main_db
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres", "-d", "main_db" ]
+      interval: 5s
+      retries: 5
+    volumes:
+      - ./scripts/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - messenger_network
+  django_web_migrate:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    restart: "no"
+    command: [ "python", "manage.py", "migrate"]
+    env_file:
+      - ./conf/.env
+    depends_on:
+      web_db:
+        condition: service_healthy
+    networks:
+      - messenger_network
+    volumes:
+      - .:/code
+  create-superuser:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    restart: "no"
+    command: ./scripts/web/create_superuser.sh -m -l
+    env_file:
+      - ./conf/.env
+    depends_on:
+      django_web_migrate:
+        condition: service_completed_successfully
+    networks:
+      - messenger_network
+    volumes:
+      - .:/code
+
+volumes:
+  prom_data:
+
+networks:
+  messenger_network:
+    external: True
