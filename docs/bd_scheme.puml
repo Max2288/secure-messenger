@@ -11,6 +11,7 @@ entity "Users" {
 entity "Chats" {
   * chat_id : int <<PK>>
   --
+  name : varchar
   chat_type : varchar
   created_at : timestamp
 }
@@ -21,6 +22,7 @@ entity "ChatParticipants" {
   chat_id : int
   user_id : int
   joined_at : timestamp
+  left_at : timestamp
 }
 
 entity "Messages" {
@@ -29,7 +31,7 @@ entity "Messages" {
   chat_id : int
   sender_id : int
   encrypted_payload : bytea
-  timestamp : timestamp
+  created_at : timestamp
 }
 
 Users ||--o{ ChatParticipants : "участвует в"

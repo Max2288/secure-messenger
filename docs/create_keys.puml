@@ -1,0 +1,35 @@
+@startuml
+title Передача и создание ключа шифрования между пользователями
+actor "Sender Client\n(React + TypeScript)\n\nВася" as Sender_Vasya
+
+actor "Sender Client\n(React + TypeScript)\n\nПетя" as Sender_Petya
+
+participant "FastAPI Backend" as Backend
+
+Sender_Vasya-> Backend: POST /api/v1/chat --- Клиент создает запрос на создание чата с другим клиентом
+
+Sender_Vasya<- Backend: Отправляет Public Key 2 клиента с кем хотят создать чат --- Создает чат и добавляет в участники 1 клиента
+
+Sender_Vasya-> Sender_Vasya: Достает из local storage свой Private Key и шифрует его с помощью public key 2 участника
+
+Sender_Vasya-> Backend: Отправляет свой зашифрованный Private Key и записывает его в БД  вместе с ID чата
+
+Backend -> Sender_Petya: Висит триггер на вход пользователя в онлайн
+
+Sender_Petya -> Backend: Запрашивает Public Key Sender_Vasya
+
+Sender_Petya -> Sender_Petya : Достает из local storage свой Private Key и шифрует его с помощью public key Sender_Vasya
+
+Sender_Petya -> Backend: Отправляет свой зашифрованный Private Key и записывает его в БД  вместе с ID чата
+
+Sender_Petya  -> Sender_Petya: Генерирует Merge Private Key из своего Private Key(Берем из local storage) + Sender_Vasya Private Key(Берем его из local storage и дешифруем с помощью своего Private Key) --- Записываем Merge Private Key в local storage с ID чата, пользователь Sender_Petya готов к отправке и получения сообщений
+
+Backend -> Sender_Vasya: Висит триггер на вход пользователя в онлайн
+
+Sender_Vasya -> Backend: Запрашивает зашифрованный Private Key Sender_Petya
+
+Sender_Vasya -> Sender_Vasya: Генерирует Merge Private Key из своего Private Key(Берем из local storage) + Sender_PetyaPrivate Key(Берем его из local storage и дешифруем с помощью своего Private Key) --- Записываем Merge Private Key в local storage с ID чата, пользователь Sender_Vasya готов к отправке и получения сообщений
+
+Sender_Vasya -> Backend: Удаление записей в которых хранились зашифрованные Private Keys
+
+@enduml

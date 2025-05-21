@@ -1,11 +1,16 @@
 @startuml
 skinparam componentStyle rectangle
+skinparam defaultFontSize 20
 title Архитектура мессенджера
 
 left to right direction
 
 package "Frontend" {
   [React + TypeScript\n(Пользовательский интерфейс)] as ReactTS
+}
+
+package CentrifuGO{
+    [WebSocket Для получения данных в реальном времени]
 }
 
 package "Backend" {
@@ -18,11 +23,6 @@ package "Data Layer" {
   database "Redis\n(Кеширование)" as Redis
 }
 
-package "Messaging" {
-  node "Kafka Broker" as Kafka {
-    [Topics per Chat\n(топик для каждого чата)] as KafkaTopics
-  }
-}
 
 package "Monitoring" {
   [Prometheus\n(Сбор метрик)] as Prometheus
@@ -35,13 +35,11 @@ package "Log Aggregation (ELK)" {
   [Kibana\n(Анализ логов)] as Kibana
 }
 
-ReactTS --> FastAPI : API запросы / WebSocket
+ReactTS --> CentrifuGO : WebSocket
+CentrifuGO --> FastAPI : WebSocket
 
 FastAPI --> PostgreSQL : Чтение/Запись данных
 FastAPI --> Redis : Кеширование
-
-Kafka <--> FastAPI : Доставка сообщений / Публикация сообщений
-
 
 Django --> PostgreSQL : Миграции / Администрирование
 
