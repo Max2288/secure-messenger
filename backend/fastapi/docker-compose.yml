@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    ports:
+      - 1026:1026
+    command: scripts/web/startup.sh -m -l
+    restart: on-failure
+    env_file:
+      - .env
+    volumes:
+      - ./:/code
+      - ./:/app
+    networks:
+      - messenger_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    ports:
+      - 8000:8000
+    volumes:
+      - ./centrifugo/config.json:/centrifugo/config.json
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - messenger_network
+    restart: on-failure
+
+networks:
+  messenger_network:
+    external: true

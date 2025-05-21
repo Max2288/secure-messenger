@@ -1,0 +1,21 @@
+{
+  "client": {
+    "token": {
+      "hmac_secret_key": "super_client_key"
+    },
+    "allowed_origins": ["*"]
+  },
+  "http_api": {
+    "key": "super_api_key"
+  },
+  "channel": {
+    "without_namespace": {
+      "allow_subscribe_for_client": true
+    }
+  },
+  "admin": {
+    "enabled": true,
+    "password": "super_admin_password",
+    "secret": "super_admin_secret_key"
+  }
+}

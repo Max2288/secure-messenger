@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "encrypted_messenger"
+version = "0.1.0"
+description = ""
+authors = [""]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+orjson = "3.9.7"
+aiohttp = "3.11.7"
+fastapi = "^0.111.0"
+pydantic = { extras = ["dotenv"], version = "2.7.1" }
+pydantic-settings = "2.0.3"
+uvicorn = "0.23.1"
+structlog = "24.4.0"
+sqlalchemy = "^2.0.30"
+cryptography = "^44.0.2"
+asyncpg = "^0.30.0"
+watchfiles = "^1.0.4"
+multidict = '6.1.0'
+pycent = "^1.0"
+cent = "^5.1.0"
+python-jose = "3.3.0"
