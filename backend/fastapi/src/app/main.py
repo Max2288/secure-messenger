@@ -8,6 +8,9 @@ from src.app.base_settings import LogFormat
 from src.app.log import configure_logging
 from src.app.settings import Settings
 
+from fastapi_observer import setup_observer
+from fastapi_observer.config import ObserverConfig
+
 config = Settings()
 
 configure_logging(config.log_format == LogFormat.json)
@@ -42,6 +45,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app(*args, **kwargs) -> FastAPI:
     app = FastAPI(docs_url="/swagger", lifespan=lifespan)
+    setup_observer(app, ObserverConfig(
+        service_name='Secure_Messanger',
+        sensitive_headers=("authorization",),
+        sensitive_body_fields=("password",)
+    ))
     configure_logging()
     setup_middleware(app)
     setup_routers(app)
