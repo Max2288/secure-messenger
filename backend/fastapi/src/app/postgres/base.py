@@ -1,9 +1,6 @@
-from datetime import datetime
-
-from sqlalchemy import TIMESTAMP, MetaData, func
+from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, Mapped, declarative_mixin, declared_attr, mapped_column, registry
-
+from sqlalchemy.orm import DeclarativeBase, registry
 
 DEFAULT_SCHEMA = "messenger_encrypted"
 

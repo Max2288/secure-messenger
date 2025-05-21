@@ -1,8 +1,8 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.app.postgres.timestamp_base import TimestampMixin
 from src.app.postgres.base import DEFAULT_SCHEMA, BaseModel
+from src.app.postgres.timestamp_base import TimestampMixin
 
 
 class MessageRead(BaseModel, TimestampMixin):

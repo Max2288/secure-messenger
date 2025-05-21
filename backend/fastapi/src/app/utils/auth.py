@@ -1,13 +1,16 @@
-from jose import jwt, JWTError
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
 
-from src.user.repositories import UserRepository
-from src.app.utils.jwt import SECRET_KEY, ALGORITHM
-from src.user.models import User
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from src.app.settings import Settings
 from src.user.depends import get_user_repository
+from src.user.models import User
+from src.user.repositories import UserRepository
 
 security = HTTPBearer()
+
+settings = Settings()
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -15,7 +18,7 @@ async def get_current_user(
 ) -> User:
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise ValueError("No subject")

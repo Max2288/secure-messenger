@@ -1,17 +1,14 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import ORJSONResponse
 from starlette import status
 
+from fastapi import APIRouter, Depends
+from fastapi.responses import ORJSONResponse
 from src.app.log_route import LogRoute
 from src.app.utils.exceptions.decorator import handle_domain_error
-from src.chat_participant.schemas.api.v1 import (
-    ChatParticipantCreate,
-    ChatParticipantResponse,
-)
 from src.chat_participant.depends import get_chat_participant_repository
 from src.chat_participant.repositories import ChatParticipantRepository
+from src.chat_participant.schemas.api.v1 import ChatParticipantCreate, ChatParticipantResponse
 
 router = APIRouter(route_class=LogRoute)
 
@@ -49,7 +46,9 @@ async def get_all_chat_participants(
 ) -> ORJSONResponse:
     participants = await repository.get_all()
     return ORJSONResponse(
-        content=[ChatParticipantResponse.model_validate(p, from_attributes=True).model_dump(mode="json") for p in participants],
+        content=[
+            ChatParticipantResponse.model_validate(p, from_attributes=True).model_dump(mode="json") for p in participants
+        ],
         status_code=status.HTTP_200_OK,
     )
 

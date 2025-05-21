@@ -21,3 +21,24 @@ multidict = '6.1.0'
 pycent = "^1.0"
 cent = "^5.1.0"
 python-jose = "3.3.0"
+
+
+[tool.isort]
+profile = "black"
+line_length = 127
+skip_gitignore = true
+skip = ["migrations"]
+
+[tool.ruff]
+line-length = 127
+show-fixes = true
+exclude = ["migrations"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+strict = true
+implicit_optional = true
+check_untyped_defs = true
+platform = "linux"
+exclude = ["test", ".test", "./test", "migrations"]

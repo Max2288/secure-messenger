@@ -1,11 +1,10 @@
 from fastapi import APIRouter
-
 from src.app.log_route import LogRoute
-from src.user.handlers.api.v1.router import router as user_router
 from src.chat.handlers.api.v1.router import router as chat_router
-from src.message.handlers.api.v1.router import router as message_router
 from src.chat_participant.handlers.api.v1.router import router as chat_participant_router
+from src.message.handlers.api.v1.router import router as message_router
 from src.message_read.handlers.api.v1.router import router as message_read_router
+from src.user.handlers.api.v1.router import router as user_router
 
 router = APIRouter(route_class=LogRoute)
 

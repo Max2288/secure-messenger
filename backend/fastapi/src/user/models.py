@@ -15,4 +15,3 @@ class User(BaseModel, TimestampMixin):
     username: Mapped[str] = mapped_column(String(150), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     public_key: Mapped[str] = mapped_column(Text)
-

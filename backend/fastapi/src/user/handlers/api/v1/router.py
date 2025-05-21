@@ -1,21 +1,17 @@
-from typing import Annotated, Optional
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import ORJSONResponse
 from starlette import status
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import ORJSONResponse
 from src.app.log_route import LogRoute
 from src.app.utils.auth import get_current_user
 from src.app.utils.exceptions.decorator import handle_domain_error
 from src.app.utils.jwt import create_access_token
+from src.user.depends import get_user_repository
 from src.user.models import User
 from src.user.repositories import UserRepository
-from src.user.schemas.api.v1 import (
-    UserCreateRequest,
-    UserUpdateRequest,
-    UserResponse, UserLoginRequest,
-)
-from src.user.depends import get_user_repository
+from src.user.schemas.api.v1 import UserCreateRequest, UserLoginRequest, UserResponse, UserUpdateRequest
 
 router = APIRouter(route_class=LogRoute)
 
@@ -123,8 +119,6 @@ async def login_user(
         },
         status_code=status.HTTP_200_OK,
     )
-
-
 
 
 @router.get("/login/me", response_model=UserResponse)

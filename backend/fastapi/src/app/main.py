@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from src.app.api.v1 import router as v1_router
 from src.app.base_settings import LogFormat
 from src.app.log import configure_logging
@@ -32,7 +31,7 @@ def setup_routers(app: FastAPI) -> None:
         return {"result": "ok"}
 
     @app.get("/ready")
-    def get_health():
+    def get_ready():
         return {"result": "ok"}
 
 

@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Optional, Sequence
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.user.models import User
@@ -29,11 +29,7 @@ class UserRepository:
         return result.scalars().all()
 
     async def create_user(self, username: str, password_hash: str, public_key: str) -> User:
-        user = User(
-            username=username,
-            password_hash=password_hash,
-            public_key=public_key
-        )
+        user = User(username=username, password_hash=password_hash, public_key=public_key)
         self.session.add(user)
         await self.session.commit()
         return user
@@ -49,11 +45,15 @@ class UserRepository:
             update(User)
             .where(User.id == user_id)
             .values(
-                **{k: v for k, v in {
-                    "username": username,
-                    "password_hash": password_hash,
-                    "public_key": public_key,
-                }.items() if v is not None}
+                **{
+                    k: v
+                    for k, v in {
+                        "username": username,
+                        "password_hash": password_hash,
+                        "public_key": public_key,
+                    }.items()
+                    if v is not None
+                }
             )
             .returning(User)
         )
@@ -68,9 +68,7 @@ class UserRepository:
         return result.rowcount > 0
 
     async def login_user(self, username: str, password_hash: str) -> User | None:
-        user = await self.session.scalar(
-            select(User).where(User.username == username)
-        )
+        user = await self.session.scalar(select(User).where(User.username == username))
         if not user or user.password_hash != password_hash:
             return None
 

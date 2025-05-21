@@ -2,9 +2,10 @@ import time
 from collections.abc import Callable
 
 import structlog
+from orjson import orjson
+
 from fastapi import Request, Response, exceptions
 from fastapi.routing import APIRoute
-from orjson import orjson
 
 logger = structlog.get_logger(__name__)
 
@@ -67,9 +68,7 @@ class LogRoute(APIRoute):
                 raise
             else:
                 process_time = time.time() - start_time
-                logger.info(
-                    "Route response status_code=%d, processing_time=%.4fs" % (response.status_code, process_time)
-                )
+                logger.info("Route response status_code=%d, processing_time=%.4fs" % (response.status_code, process_time))
 
             try:
                 response_body = response.body

@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import ForeignKey, DateTime
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.app.postgres.timestamp_base import TimestampMixin
 from src.app.postgres.base import DEFAULT_SCHEMA, BaseModel
+from src.app.postgres.timestamp_base import TimestampMixin
 
 
 class ChatParticipant(BaseModel, TimestampMixin):

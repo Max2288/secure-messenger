@@ -3,7 +3,6 @@ from functools import wraps
 from typing import Any
 
 from fastapi import HTTPException, status
-
 from src.app.utils.exceptions.schema import DomainError, ItemNotFound
 
 

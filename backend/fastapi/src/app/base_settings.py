@@ -1,6 +1,7 @@
 from enum import Enum
 
-from pydantic_settings import BaseSettings, BaseSettings as PydanticBaseSettings
+from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings as PydanticBaseSettings
 
 
 class Env(str, Enum):
@@ -25,6 +26,7 @@ class LogFormat(str, Enum):
 
 class Postgres(BaseSettings):
     POSTGRES_URL: str
+
 
 class BaseSettings(PydanticBaseSettings):
     log_level: LogLevel = LogLevel.debug

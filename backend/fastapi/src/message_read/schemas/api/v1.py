@@ -18,7 +18,6 @@ class MessageReadResponse(BaseModel):
         from_attributes = True
 
 
-
 class MessageReadBulkCreate(BaseModel):
     message_ids: list[int]
     user_id: int

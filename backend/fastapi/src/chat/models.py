@@ -3,8 +3,8 @@ from enum import Enum
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.app.postgres.timestamp_base import TimestampMixin
 from src.app.postgres.base import DEFAULT_SCHEMA, BaseModel
+from src.app.postgres.timestamp_base import TimestampMixin
 
 
 class ChatType(str, Enum):
@@ -24,4 +24,3 @@ class Chat(BaseModel, TimestampMixin):
 
     participants: Mapped[list["ChatParticipant"]] = relationship(back_populates="chat")
     messages: Mapped[list["Message"]] = relationship(back_populates="chat")
-

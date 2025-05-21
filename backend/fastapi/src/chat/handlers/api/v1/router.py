@@ -1,14 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import ORJSONResponse
 from starlette import status
 
+from fastapi import APIRouter, Depends
+from fastapi.responses import ORJSONResponse
 from src.app.log_route import LogRoute
 from src.app.utils.exceptions.decorator import handle_domain_error
-from src.chat.schemas.api.v1 import ChatCreate, ChatUpdate, ChatResponse
 from src.chat.depends import get_chat_repository
 from src.chat.repositories import ChatRepository
+from src.chat.schemas.api.v1 import ChatCreate, ChatResponse, ChatUpdate
 
 router = APIRouter(route_class=LogRoute)
 
@@ -72,7 +72,6 @@ async def delete_chat(
     repository: Annotated[ChatRepository, Depends(get_chat_repository)],
 ) -> None:
     await repository.delete(chat_id)
-
 
 
 @router.get("/by-user/{user_id}", response_model=list[ChatResponse])

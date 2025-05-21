@@ -1,13 +1,14 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import ORJSONResponse
+
 from starlette import status
 
+from fastapi import APIRouter, Depends
+from fastapi.responses import ORJSONResponse
 from src.app.log_route import LogRoute
-from src.message_read.repositories import MessageReadRepository
-from src.message_read.schemas.api.v1 import MessageReadCreate, MessageReadResponse, MessageReadBulkCreate
-from src.message_read.depends import get_message_read_repository
 from src.app.utils.exceptions.decorator import handle_domain_error
+from src.message_read.depends import get_message_read_repository
+from src.message_read.repositories import MessageReadRepository
+from src.message_read.schemas.api.v1 import MessageReadBulkCreate, MessageReadCreate, MessageReadResponse
 
 router = APIRouter(route_class=LogRoute)
 

@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Sequence
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.chat.models import Chat
@@ -48,10 +48,6 @@ class ChatRepository:
         await self.session.commit()
 
     async def get_chats_by_user(self, user_id: int) -> list[Chat]:
-        stmt = (
-            select(Chat)
-            .join(ChatParticipant)
-            .where(ChatParticipant.user_id == user_id)
-        )
+        stmt = select(Chat).join(ChatParticipant).where(ChatParticipant.user_id == user_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
