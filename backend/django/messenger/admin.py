@@ -1,17 +1,10 @@
 from django.contrib import admin
+from messenger.models import *
 
 # Register your models here.
 
 
-from messenger.models import *
-
-models_to_register = [
-    Chat,
-    User,
-    ChatParticipant,
-    Message,
-    MessageRead
-]
+models_to_register = [Chat, User, ChatParticipant, Message, MessageRead]
 
 
 for model in models_to_register:

@@ -1,7 +1,5 @@
 from django.db import models
-
 from django.utils.translation import gettext_lazy as _
-
 from messenger.mixins import IDMixin, TimestampMixin
 
 
@@ -20,8 +18,8 @@ class User(IDMixin, TimestampMixin):
 
 class Chat(IDMixin, TimestampMixin):
     CHAT_TYPES = (
-        ('private', 'Private'),
-        ('group', 'Group'),
+        ("private", "Private"),
+        ("group", "Group"),
     )
     name = models.CharField(max_length=255)
     chat_type = models.CharField(max_length=10, choices=CHAT_TYPES)
@@ -58,10 +56,10 @@ class Message(IDMixin, TimestampMixin):
 
 
 class MessageRead(IDMixin, TimestampMixin):
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='reads')
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reads")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         db_table = '"messenger_encrypted"."message_read"'
         verbose_name = _("message_read")
-        unique_together = ('message', 'user')
+        unique_together = ("message", "user")
