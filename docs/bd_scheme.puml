@@ -1,41 +1,57 @@
 @startuml
-entity "Users" {
+entity "Users" as User {
   * id : int <<PK>>
   --
-  username : varchar
-  password_hash : varchar
+  username : varchar(150)
+  password_hash : varchar(255)
   public_key : text
   created_at : timestamp
+  updated_at : timestamp
 }
 
-entity "Chats" {
-  * chat_id : int <<PK>>
-  --
-  name : varchar
-  chat_type : varchar
-  created_at : timestamp
-}
-
-entity "ChatParticipants" {
+entity "Chats" as Chat {
   * id : int <<PK>>
   --
-  chat_id : int
-  user_id : int
-  joined_at : timestamp
-  left_at : timestamp
+  name : varchar(255)
+  chat_type : enum('private', 'group')
+  created_at : timestamp
+  updated_at : timestamp
 }
 
-entity "Messages" {
-  * message_id : int <<PK>>
+entity "ChatParticipants" as ChatParticipant {
+  * id : int <<PK>>
   --
-  chat_id : int
-  sender_id : int
+  chat_id : int <<FK>>
+  user_id : int <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+  left_at : timestamp (nullable)
+}
+
+entity "Messages" as Message {
+  * id : int <<PK>>
+  --
+  chat_id : int <<FK>>
+  sender_id : int <<FK>>
   encrypted_payload : bytea
   created_at : timestamp
+  updated_at : timestamp
 }
 
-Users ||--o{ ChatParticipants : "участвует в"
-Users ||--o{ Messages : "отправляет"
-Chats ||---o{ ChatParticipants : "содержит"
-Chats ||---o{ Messages : "содержит"
+entity "MessageReads" as MessageRead {
+  * id : int <<PK>>
+  --
+  message_id : int <<FK>>
+  user_id : int <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+User ||--o{ ChatParticipant : participates
+User ||--o{ Message : sends
+Chat ||--o{ ChatParticipant : has
+Chat ||--o{ Message : contains
+Message ||--o{ MessageRead : is_read_by
+User ||--o{ MessageRead : reads
+
 @enduml
