@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { Centrifuge, Subscription } from 'centrifuge';
 import styles from './Chat.module.css';
+import { fetchChatsByUser, createChat, addParticipant } from '../../api/chat';
+import { fetchMessagesByChat, sendMessage, markMessagesAsRead } from '../../api/message';
+import { fetchCentrifugoToken, getCentrifugoWsUrl } from '../../api/centrifugo';
 
 interface Message {
   id: number;
@@ -39,33 +41,17 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
   const messageListRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await axios.get(`http://localhost:1026/api/v1/chat/by-user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setChats(response.data);
-      } catch (error) {
-        console.error('Error fetching chats:', error);
-      }
-    };
-    if (userId) fetchChats();
+    if (!userId) return;
+    fetchChatsByUser(userId, token)
+      .then(res => setChats(res.data))
+      .catch(err => console.error('Error fetching chats:', err));
   }, [userId, token]);
 
   useEffect(() => {
     const initCentrifuge = async () => {
       try {
-        const response = await axios.get(`http://localhost:1026/api/v1/message/centrifugo/token`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const { token: centrifugoToken } = response.data;
-
-        centrifugeRef.current = new Centrifuge(
-          'wss://0a22-18-153-55-148.ngrok-free.app/connection/websocket?format=json',
-          { token: centrifugoToken }
-        );
-
+        const { data } = await fetchCentrifugoToken(token);
+        centrifugeRef.current = new Centrifuge(getCentrifugoWsUrl(), { token: data.token });
         centrifugeRef.current.connect();
       } catch (error) {
         console.error('Error initializing Centrifuge:', error);
@@ -76,42 +62,28 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
       initCentrifuge();
     }
 
-    return () => {
-      centrifugeRef.current?.disconnect();
-    };
+    return () => centrifugeRef.current?.disconnect();
   }, [token]);
 
   useEffect(() => {
-    const setup = async () => {
-      if (activeChat && centrifugeRef.current) {
-        try {
-          const response = await axios.get(`http://localhost:1026/api/v1/message/by-chat/${activeChat}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setMessages(response.data);
+    if (!activeChat || !centrifugeRef.current) return;
 
-          const channel = `chat_${activeChat}`;
-          const sub = centrifugeRef.current.newSubscription(channel);
+    fetchMessagesByChat(activeChat, token)
+      .then(res => setMessages(res.data))
+      .catch(err => console.error('Error fetching messages:', err));
 
-          sub.on('publication', (ctx) => {
-            const newMsg = {
-              id: ctx.data.id,
-              sender_id: ctx.data.sender,
-              encrypted_payload: ctx.data.message,
-            };
-
-            setMessages((prev) => [...prev, newMsg]);
-          });
-
-          sub.subscribe();
-          subscriptionRef.current = sub;
-        } catch (error) {
-          console.error('Error setting up chat subscription:', error);
-        }
-      }
-    };
-
-    if (activeChat) setup();
+    const channel = `chat_${activeChat}`;
+    const sub = centrifugeRef.current.newSubscription(channel);
+    sub.on('publication', ctx => {
+      const newMsg = {
+        id: ctx.data.id,
+        sender_id: ctx.data.sender,
+        encrypted_payload: ctx.data.message,
+      };
+      setMessages(prev => [...prev, newMsg]);
+    });
+    sub.subscribe();
+    subscriptionRef.current = sub;
 
     return () => {
       subscriptionRef.current?.unsubscribe();
@@ -126,100 +98,65 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
   }, [messages, isAutoScrollEnabled]);
 
   useEffect(() => {
-    const inputField = document.getElementById('chatInput');
-    if (!inputField) return;
+    const input = document.getElementById('chatInput');
+    if (!input) return;
 
-    const handleFocus = async () => {
+    const onFocus = async () => {
       if (!userId || messages.length === 0) return;
-
-      const unreadIds = messages
-        .filter((msg) => msg.sender_id !== userId)
-        .map((msg) => msg.id);
-
-      if (unreadIds.length > 0) {
+      const unreadIds = messages.filter(m => m.sender_id !== userId).map(m => m.id);
+      if (unreadIds.length) {
         try {
-          await axios.post(
-            'http://localhost:1026/api/v1/message-read/bulk',
-            {
-              message_ids: unreadIds,
-              user_id: userId,
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          console.log('Marked messages as read:', unreadIds);
-        } catch (error) {
-          console.error('Error marking messages as read:', error);
+          await markMessagesAsRead(unreadIds, userId, token);
+        } catch (err) {
+          console.error('Mark read error:', err);
         }
       }
     };
 
-    inputField.addEventListener('focus', handleFocus);
-    return () => inputField.removeEventListener('focus', handleFocus);
+    input.addEventListener('focus', onFocus);
+    return () => input.removeEventListener('focus', onFocus);
   }, [messages, userId, token]);
 
   const handleSendMessage = async () => {
-    if (message && activeChat) {
-      try {
-        await axios.post(
-          'http://localhost:1026/api/v1/message',
-          {
-            chat_id: activeChat,
-            sender_id: userId,
-            encrypted_payload: message,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setMessage('');
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+    if (!message || !activeChat || !userId) return;
+    try {
+      await sendMessage(activeChat, userId, message, token);
+      setMessage('');
+    } catch (err) {
+      console.error('Send message error:', err);
     }
   };
 
   const handleScroll = () => {
     const container = messageListRef.current;
     if (!container) return;
-    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-    setIsAutoScrollEnabled(isAtBottom);
+    const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+    setIsAutoScrollEnabled(atBottom);
   };
 
   const handleCreateChat = async () => {
-    const chatName = prompt('Enter name for the new chat:');
+    const chatName = prompt('Chat name?');
     if (!chatName || !userId) return;
-
     try {
-      const response = await axios.post(
-        'http://localhost:1026/api/v1/chat',
-        { name: chatName, chat_type: 'private' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const newChat = response.data;
-      setChats((prev) => [...prev, newChat]);
-
-      await axios.post(
-        `http://localhost:1026/api/v1/chat_participant`,
-        { chat_id: newChat.id, user_id: userId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data: newChat } = await createChat(chatName, token);
+      setChats(prev => [...prev, newChat]);
+      await addParticipant(newChat.id, userId, token);
 
       const secondUserId = prompt('Enter ID of another user to add:');
       if (secondUserId) {
-        await axios.post(
-          `http://localhost:1026/api/v1/chat-participant`,
-          { chat_id: newChat.id, user_id: parseInt(secondUserId) },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const secondIdParsed = parseInt(secondUserId);
+        if (!isNaN(secondIdParsed)) {
+          await addParticipant(newChat.id, secondIdParsed, token);
+        } else {
+          alert('Invalid user ID');
+        }
       }
-    } catch (error) {
-      console.error('Error creating chat or adding participants:', error);
+    } catch (err) {
+      console.error('Create chat error:', err);
     }
   };
 
-  if (!userId) return <div>Ошибка: токен недействителен</div>;
+  if (!userId) return <div>Invalid token</div>;
 
   return (
     <div className={styles.chatContainer}>
@@ -228,7 +165,7 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
         <button onClick={handleCreateChat} className={styles.createChatButton}>Create Chat</button>
         <button onClick={onLogout} className={styles.logoutButton}>Logout</button>
         <div className={styles.chatList}>
-          {chats.map((chat) => (
+          {chats.map(chat => (
             <div
               key={chat.id}
               onClick={() => setActiveChat(chat.id)}
@@ -239,38 +176,36 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
           ))}
         </div>
       </div>
-
       <div className={styles.mainChat}>
         {activeChat ? (
           <div className={styles.messageSection}>
             <div className={styles.messageList} ref={messageListRef} onScroll={handleScroll}>
-              {messages.map((msg) => (
-                  <div
-                      key={msg.id}
-                      className={`${styles.message} ${msg.sender_id === userId ? styles.sent : styles.received}`}
-                      data-status={msg.sender_id === userId ? (msg.is_read ? '✓✓' : '✓') : ''} // <--- вот это
-                  >
-                    <strong>{msg.sender_id === userId ? 'You' : `User ${msg.sender_id}`}:</strong>{' '}
-                    {msg.encrypted_payload}
-                  </div>
-
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`${styles.message} ${msg.sender_id === userId ? styles.sent : styles.received}`}
+                  data-status={msg.sender_id === userId ? (msg.is_read ? '✓✓' : '✓') : ''}
+                >
+                  <strong>{msg.sender_id === userId ? 'You' : `User ${msg.sender_id}`}:</strong>{' '}
+                  {msg.encrypted_payload}
+                </div>
               ))}
               <div ref={messagesEndRef}/>
             </div>
             <div className={styles.messageInput}>
               <input
-                  id="chatInput"
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type a message..."
+                id="chatInput"
+                type="text"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder="Type a message..."
                 className={styles.inputField}
               />
               <button onClick={handleSendMessage} className={styles.sendButton}>Send</button>
             </div>
           </div>
         ) : (
-          <div>📭 Выберите чат, чтобы начать общение</div>
+          <div>📭 Выбери чат чтобы начать общение</div>
         )}
       </div>
     </div>
