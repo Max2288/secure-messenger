@@ -62,7 +62,7 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
         const { token: centrifugoToken } = response.data;
 
         centrifugeRef.current = new Centrifuge(
-          'wss://a085-18-153-55-148.ngrok-free.app/connection/websocket?format=json',
+          'wss://0a22-18-153-55-148.ngrok-free.app/connection/websocket?format=json',
           { token: centrifugoToken }
         );
 
