@@ -34,6 +34,7 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
   const [message, setMessage] = useState('');
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+  const [isSending, setIsSending] = useState(false);
 
   const centrifugeRef = useRef<Centrifuge | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
@@ -118,12 +119,15 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
   }, [messages, userId, token]);
 
   const handleSendMessage = async () => {
-    if (!message || !activeChat || !userId) return;
+    if (!message.trim() || !activeChat || !userId || isSending) return;
+    setIsSending(true);
     try {
-      await sendMessage(activeChat, userId, message, token);
+      await sendMessage(activeChat, userId, message.trim(), token);
       setMessage('');
     } catch (err) {
       console.error('Send message error:', err);
+    } finally {
+      setTimeout(() => setIsSending(false), 500);
     }
   };
 
@@ -190,18 +194,30 @@ const Chat: React.FC<ChatProps> = ({ token, onLogout }) => {
                   {msg.encrypted_payload}
                 </div>
               ))}
-              <div ref={messagesEndRef}/>
+              <div ref={messagesEndRef} />
             </div>
             <div className={styles.messageInput}>
-              <input
+              <textarea
                 id="chatInput"
-                type="text"
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 placeholder="Type a message..."
                 className={styles.inputField}
+                rows={2}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
               />
-              <button onClick={handleSendMessage} className={styles.sendButton}>Send</button>
+              <button
+                onClick={handleSendMessage}
+                className={styles.sendButton}
+                disabled={isSending || !message.trim()}
+              >
+                {isSending ? 'Sending...' : 'Send'}
+              </button>
             </div>
           </div>
         ) : (
