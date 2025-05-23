@@ -50,7 +50,7 @@ def create_app(*args, **kwargs) -> FastAPI:
         sensitive_headers=("authorization",),
         sensitive_body_fields=("password",)
     ))
-    configure_logging()
+    #configure_logging()
     setup_middleware(app)
     setup_routers(app)
 

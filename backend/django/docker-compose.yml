@@ -16,7 +16,7 @@ services:
       django_web_migrate:
         condition: service_completed_successfully
     networks:
-      - messenger_network
+      - custom_bridge
   web_db:
     image: postgres:15.3
     environment:
@@ -33,7 +33,7 @@ services:
     volumes:
       - ./scripts/postgres:/docker-entrypoint-initdb.d
     networks:
-      - messenger_network
+      - custom_bridge
   django_web_migrate:
     build:
       dockerfile: docker/Dockerfile
@@ -46,7 +46,7 @@ services:
       web_db:
         condition: service_healthy
     networks:
-      - messenger_network
+      - custom_bridge
     volumes:
       - .:/code
   create-superuser:
@@ -61,7 +61,7 @@ services:
       django_web_migrate:
         condition: service_completed_successfully
     networks:
-      - messenger_network
+      - custom_bridge
     volumes:
       - .:/code
 
@@ -69,5 +69,5 @@ volumes:
   prom_data:
 
 networks:
-  messenger_network:
+  custom_bridge:
     external: True

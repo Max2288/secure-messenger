@@ -1,18 +1,21 @@
 version: '3.8'
 
 networks:
-  messenger_network:
+  custom_bridge:
     external: true
 
 x-def-logging: &default-logging
   logging:
     driver: "loki"
     options:
-      loki-url: "http://loki:3100/loki/api/v1/push"
+      loki-url: "http://192.168.0.10:3100/loki/api/v1/push"
       loki-batch-size: "100"
       loki-retries: 2
       loki-max-backoff: 1000ms
       loki-timeout: 1s
+      loki-external-labels: "container={{.Name}},image={{.ImageName}},id={{.ID}}"
+
+
 
 services:
   web:
@@ -29,7 +32,7 @@ services:
       - ./:/code
       - ./:/app
     networks:
-      - messenger_network
+      - custom_bridge
     extra_hosts:
       - "host.docker.internal:host-gateway"
     <<: *default-logging
@@ -45,7 +48,7 @@ services:
         soft: 65535
         hard: 65535
     networks:
-      - messenger_network
+      - custom_bridge
     restart: on-failure
     <<: *default-logging
 
@@ -59,7 +62,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - messenger_network
+      - custom_bridge
     <<: *default-logging
 
   loki:
@@ -71,7 +74,8 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - messenger_network
+      custom_bridge:
+        ipv4_address: 192.168.0.10
 
   grafana:
     image: grafana/grafana:latest
@@ -82,8 +86,10 @@ services:
       - TZ=${SYSTEM_TIMEZONE:-Europe/Moscow}
     volumes:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/provisioning/dashboards
     ports:
       - "3000:3000"
     networks:
-      - messenger_network
+      - custom_bridge
     <<: *default-logging
