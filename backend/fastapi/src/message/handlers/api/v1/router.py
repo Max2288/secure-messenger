@@ -110,6 +110,8 @@ def generate_centrifugo_token(authorization: str = Header(...)):
     now = datetime.utcnow()
     exp = now + timedelta(minutes=120)
     centrifugo_token = jwt.encode(
-        {"sub": str(user_id), "exp": exp}, settings.CENTRIFUGO_CLIENT_SECRET_KEY, algorithm=settings.ALGORITHM
+        {"sub": str(user_id), "exp": exp},
+        settings.CENTRIFUGO_CLIENT_SECRET_KEY,
+        algorithm=settings.ALGORITHM
     )
     return {"token": centrifugo_token}

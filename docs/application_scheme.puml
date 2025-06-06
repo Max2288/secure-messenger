@@ -1,7 +1,11 @@
 @startuml
 skinparam componentStyle rectangle
-skinparam defaultFontSize 20
-title Архитектура мессенджера
+skinparam activityDiamondFontSize 30
+skinparam activityArrowFontSize 24
+skinparam PackageFontSize 24
+skinparam ComponentFontSize 34
+skinparam DatabaseFontSize 34
+
 
 left to right direction
 
@@ -9,46 +13,39 @@ package "Frontend" {
   [React + TypeScript\n(Пользовательский интерфейс)] as ReactTS
 }
 
-package CentrifuGO{
-    [WebSocket Для получения данных в реальном времени]
+package "WebSocket Layer" {
+  [Centrifugo\n(Передача сообщений в реальном времени)] as Centrifugo
 }
 
 package "Backend" {
-  [Django\n(Admin & Migrations)] as Django
-  [FastAPI\n(Business Logic)] as FastAPI
+  [Django\n(Админка, миграции)] as Django
+  [FastAPI\n(API и бизнес-логика)] as FastAPI
 }
 
 package "Data Layer" {
-  database "PostgreSQL\n(База данных)" as PostgreSQL
-  database "Redis\n(Кеширование)" as Redis
+  database "PostgreSQL\n(Постоянные данные)" as PostgreSQL
+  database "Redis\n(Кэш, сессии, токены)" as Redis
 }
 
-
-package "Monitoring" {
+package "Monitoring & Logging" {
   [Prometheus\n(Сбор метрик)] as Prometheus
-  [Grafana\n(Визуализация метрик)] as Grafana
+  [Grafana\n(Дашборды и визуализация)] as Grafana
+  [Loki\n(Централизованное логирование)] as Loki
 }
 
-package "Log Aggregation (ELK)" {
-  [Logstash\n(Сбор логов)] as Logstash
-  database "Elasticsearch\n(Хранение логов)" as Elasticsearch
-  [Kibana\n(Анализ логов)] as Kibana
-}
+Centrifugo <-- ReactTS : WebSocket
+Centrifugo --> FastAPI : Входящие сообщения
 
-ReactTS --> CentrifuGO : WebSocket
-CentrifuGO --> FastAPI : WebSocket
+FastAPI -> PostgreSQL : Чтение/Запись
+FastAPI -> Redis : Кэш и токены
+Django --> PostgreSQL : Миграции/админка
 
-FastAPI --> PostgreSQL : Чтение/Запись данных
-FastAPI --> Redis : Кеширование
-
-Django --> PostgreSQL : Миграции / Администрирование
-
-Prometheus --> FastAPI : Сбор метрик
-Prometheus --> PostgreSQL : Сбор метрик
+Prometheus -> FastAPI : Метрики
+Prometheus --> PostgreSQL : Метрики
 Grafana --> Prometheus : Визуализация метрик
+FastAPI -> Loki : Логи
 
-FastAPI --> Logstash : Отправка логов
-Logstash --> Elasticsearch : Индексация логов
-Kibana --> Elasticsearch : Анализ логов
+Centrifugo --> Loki : Логи
+Grafana -> Loki : Просмотр логов
 
 @enduml

@@ -47,11 +47,11 @@ entity "MessageReads" as MessageRead {
   updated_at : timestamp
 }
 
-User ||--o{ ChatParticipant : participates
+User ||-o{ ChatParticipant : participates
 User ||--o{ Message : sends
-Chat ||--o{ ChatParticipant : has
-Chat ||--o{ Message : contains
-Message ||--o{ MessageRead : is_read_by
-User ||--o{ MessageRead : reads
+Chat ||-o{ ChatParticipant : has
+Chat ||-o{ Message : contains
+Message ||-o{ MessageRead : is_read_by
+User ||-o{ MessageRead : reads
 
 @enduml
